@@ -1,10 +1,12 @@
-from tkinter import DISABLED, Frame, Label, Entry, Button, END, messagebox
+from tkinter import DISABLED, Frame, Label, Entry, Button, END, messagebox, Listbox
 from tkinter.ttk import Combobox
+from decimal import *
 
 class View(Frame):
   def __init__(self, parent):
     super().__init__(parent)
 
+    getcontext().prec = 4
     self.controller = None
 
     self.lblTitulo = Label(self, text = "Probabilidade Binomial", font = "Arial 20 bold")
@@ -27,8 +29,11 @@ class View(Frame):
     self.comboPItens = ["Percentual %", "Decimal"]
     self.comboP = Combobox(self, values = self.comboPItens, state = "readonly")
     self.comboP.set("Percentual %")
+    self.comboP.bind("<<ComboboxSelected>>", self.ComboboxSelected)
 
     self.btnCalcular = Button(self, text = "Calcular", font = "Arial 10", command = self.btnCalcularOnClick)
+
+    self.listBox = Listbox(self)
 
     self.lblTitulo.grid(row = 0, column = 0, columnspan = 3)
     self.lblXi.grid(row = 1, column = 0, sticky = "w")
@@ -47,6 +52,8 @@ class View(Frame):
 
     self.btnCalcular.grid(row = 6, column = 1, columnspan = 2)
 
+    self.listBox.grid(row = 1, column = 3, rowspan = 5)
+
   def btnCalcularOnClick(self):
     if self.controller is None:
       raise ValueError("Classe de controle não criada!")
@@ -58,8 +65,8 @@ class View(Frame):
 
   def EhValorNumerico(self, value):
     try:
-      val = float(value)
-      return True if type(val) == float else False
+      val = Decimal(value)
+      return True if type(val) == Decimal else False
     except:
       return False
 
@@ -76,7 +83,7 @@ class View(Frame):
         self.etrQ["state"] = "normal"
         self.etrQ.delete(0, END)
 
-        valorP = self.controller.CalcularPorcentagem(float(self.etrP.get()), int(self.comboP.current()))
+        valorP = self.controller.CalcularPorcentagem(Decimal(self.etrP.get()), int(self.comboP.current()))
         valorQ = self.controller.CalcularComplemento(valorP)
 
         self.etrQ.insert(0, str(valorQ))
@@ -92,3 +99,18 @@ class View(Frame):
       self.etrQ["state"] = "normal"
       self.etrQ.delete(0, END)
       self.etrQ["state"] = "disabled"
+
+  def ComboboxSelected(self, event):
+    print(event)
+
+  def limparListBox(self):
+    self.listBox.delete(0, END)
+
+  def AddStrListBox(self, valor):
+    self.listBox.insert(END, valor)
+
+  def AddListBox(self, x, probabilidade, acumulado):
+    if str(acumulado) == "" or acumulado == 0:
+      self.listBox.insert(END, "[" + str(x) + "]  [" + str(probabilidade) + "] []")
+    else:
+      self.listBox.insert(END, "[" + str(x) + "]  [" + str(probabilidade) + "]  [" + str(acumulado) + "]")
