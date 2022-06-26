@@ -26,7 +26,7 @@ class App(Tk):
 
     controller = Controller(model, view)
 
-    view.set_controller(controller)
+    view.controller = controller
 
 if __name__ == "__main__":
   app = App()

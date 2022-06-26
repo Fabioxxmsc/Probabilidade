@@ -1,27 +1,25 @@
 from tkinter import DISABLED, Frame, Label, Entry, Button, END, messagebox, Listbox
 from tkinter.ttk import Combobox
 from decimal import *
+from controller import Controller
 
 class View(Frame):
   def __init__(self, parent):
     super().__init__(parent)
 
     getcontext().prec = 4
-    self.controller = None
+    self._controller: Controller = None
 
     self.lblTitulo = Label(self, text = "Probabilidade Binomial", font = "Arial 20 bold")
-    self.lblXi = Label(self, width = 5, text = "X inicial", font = "Arial 10")
-    self.lblXf = Label(self, width = 5, text = "X final", font = "Arial 10")    
-    self.lblN = Label(self, width = 5, text = "N", font = "Arial 10")
-    self.lblP = Label(self, width = 5, text = "P", font = "Arial 10")
-    self.lblQ = Label(self, width = 5, text = "Q", font = "Arial 10")
+    self.lblXi = Label(self, width = 5, text = "x inicial", font = "Arial 10")
+    self.lblXf = Label(self, width = 5, text = "x final", font = "Arial 10")    
+    self.lblN = Label(self, width = 5, text = "n", font = "Arial 10")
+    self.lblP = Label(self, width = 5, text = "p", font = "Arial 10")
+    self.lblQ = Label(self, width = 5, text = "q", font = "Arial 10")
 
     self.etrXi = Entry(self)
-    self.etrXi.bind("<KeyRelease>", self.etrKeyRelease)
     self.etrXf = Entry(self)
-    self.etrXf.bind("<KeyRelease>", self.etrKeyRelease)
     self.etrN = Entry(self)
-    self.etrN.bind("<KeyRelease>", self.etrKeyRelease)
     self.etrP = Entry(self)
     self.etrP.bind("<KeyRelease>", self.etrPKeyRelease)
     self.etrQ = Entry(self, state = DISABLED)
@@ -33,7 +31,7 @@ class View(Frame):
 
     self.btnCalcular = Button(self, text = "Calcular", font = "Arial 10", command = self.btnCalcularOnClick)
 
-    self.listBox = Listbox(self)
+    self.listBox = Listbox(self, width = 30, xscrollcommand = True, yscrollcommand = True)
 
     self.lblTitulo.grid(row = 0, column = 0, columnspan = 3)
     self.lblXi.grid(row = 1, column = 0, sticky = "w")
@@ -54,54 +52,48 @@ class View(Frame):
 
     self.listBox.grid(row = 1, column = 3, rowspan = 5)
 
-  def btnCalcularOnClick(self):
-    if self.controller is None:
+  @property
+  def controller(self) -> Controller:
+    if self._controller is None:
       raise ValueError("Classe de controle não criada!")
     else:
-      self.controller.Calcular(self.etrXi.get(), self.etrXf.get(), self.etrN.get(), self.etrP.get(), self.etrQ.get())
+      return self._controller
 
-  def set_controller(self, controller):
-    self.controller = controller
-
-  def EhValorNumerico(self, value):
-    try:
-      val = Decimal(value)
-      return True if type(val) == Decimal else False
-    except:
-      return False
-
-  def etrKeyRelease(self, sender):
-    valor = sender.char.strip()
-    if valor != "":
-      if not self.EhValorNumerico(valor):
-        messagebox.showerror("Validação", "Valor '" + valor + "' não é numérico")
+  @controller.setter
+  def controller(self, controller: Controller):
+    if controller is None:
+      raise ValueError("Classe de controle não criada!")
+    else:
+      self._controller = controller
+  
+  def btnCalcularOnClick(self):
+    self.controller.Calcular(self.etrXi.get(), self.etrXf.get(), self.etrN.get(), self.etrP.get(), self.etrQ.get())
 
   def etrPKeyRelease(self, sender):
     valor = sender.char.strip()
     if valor != "":
-      if self.EhValorNumerico(valor):
-        self.etrQ["state"] = "normal"
-        self.etrQ.delete(0, END)
-
-        valorP = self.controller.CalcularPorcentagem(Decimal(self.etrP.get()), int(self.comboP.current()))
-        valorQ = self.controller.CalcularComplemento(valorP)
-
-        self.etrQ.insert(0, str(valorQ))
-        self.etrQ["state"] = "disabled"
+      if self.controller.EhValorDecimal(valor):
+        self.controller.AtribuirComplemento(Decimal(valor), self.comboP.current())
 
       elif valor.find(".") == -1:
         self.etrQ["state"] = "normal"
         self.etrQ.delete(0, END)
         self.etrQ["state"] = "disabled"
-        messagebox.showerror("Validação", "Valor '" + valor + "' não é numérico")
+        self.MsgErro("Valor '" + valor + "' não é numérico")
 
     else:
       self.etrQ["state"] = "normal"
       self.etrQ.delete(0, END)
       self.etrQ["state"] = "disabled"
 
+  def setValueComplemento(self, value):
+    self.etrQ["state"] = "normal"
+    self.etrQ.delete(0, END)
+    self.etrQ.insert(0, str(value))
+    self.etrQ["state"] = "disabled"
+
   def ComboboxSelected(self, event):
-    print(event)
+    self.controller.AtribuirComplemento(self.etrP.get(), self.comboP.current())
 
   def limparListBox(self):
     self.listBox.delete(0, END)
@@ -114,3 +106,9 @@ class View(Frame):
       self.listBox.insert(END, "[" + str(x) + "]  [" + str(probabilidade) + "] []")
     else:
       self.listBox.insert(END, "[" + str(x) + "]  [" + str(probabilidade) + "]  [" + str(acumulado) + "]")
+
+  def MsgErro(self, msg):
+    messagebox.showerror(title="Erro", message=msg)
+
+  def MsgAviso(self, msg):
+    messagebox.showwarning(title="Aviso", message=msg)
