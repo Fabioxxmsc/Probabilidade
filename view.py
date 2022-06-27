@@ -2,6 +2,7 @@ from tkinter import DISABLED, Frame, Label, Entry, Button, END, messagebox, List
 from tkinter.ttk import Combobox
 from decimal import *
 from controller import Controller
+import sys
 
 class View(Frame):
   def __init__(self, parent):
@@ -70,16 +71,26 @@ class View(Frame):
     self.controller.Calcular(self.etrXi.get(), self.etrXf.get(), self.etrN.get(), self.etrP.get(), self.etrQ.get(), self.comboP.current())
 
   def etrPKeyRelease(self, sender):
-    valor = sender.char.strip()
+    win: bool = sys.platform.startswith("win")
+
+    valor = sender.char.strip() if win else sender.keysym.strip()
+
     if valor != "":
       if self.controller.EhValorDecimal(valor):
         self.controller.AtribuirComplemento(Decimal(self.etrP.get()), self.comboP.current())
 
-      elif valor.find(".") == -1:
-        self.etrQ["state"] = "normal"
-        self.etrQ.delete(0, END)
-        self.etrQ["state"] = "disabled"
-        self.MsgErro("Valor '" + valor + "' não é numérico")
+      elif win:
+        if valor.find(".") == -1:
+          self.etrQ["state"] = "normal"
+          self.etrQ.delete(0, END)
+          self.etrQ["state"] = "disabled"
+          self.MsgErro("Valor '" + valor + "' não é numérico")
+      else:
+        if not (sender.keysym_num in [46, 65288, 65293]):
+          self.etrQ["state"] = "normal"
+          self.etrQ.delete(0, END)
+          self.etrQ["state"] = "disabled"
+          self.MsgErro("Valor '" + valor + "' não é numérico")
 
     else:
       self.limparQ()

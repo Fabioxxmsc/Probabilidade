@@ -1,14 +1,21 @@
-from tkinter import Tk
+from tkinter import Tk, PhotoImage
 from view import View
 from model import Model
 from controller import Controller
+import sys
 
 class App(Tk):
   def __init__(self):
     super().__init__()
 
     self.title("Calculadora")
-    self.iconbitmap(r"icone\menu.ico")
+
+    if sys.platform.startswith("win"):
+      self.iconbitmap(r"icone\menu.ico")
+    else:
+      logo = PhotoImage(file = r"./icone/menu.gif")
+      self.call('wm', 'iconphoto', self._w, logo)
+      
     self.resizable(False, False)
 
     self.largura = 800
