@@ -31,7 +31,7 @@ class View(Frame):
 
     self.btnCalcular = Button(self, text = "Calcular", font = "Arial 10", command = self.btnCalcularOnClick)
 
-    self.listBox = Listbox(self, width = 30, xscrollcommand = True, yscrollcommand = True)
+    self.listBox = Listbox(self, width = 70, xscrollcommand = True, yscrollcommand = True)
 
     self.lblTitulo.grid(row = 0, column = 0, columnspan = 3)
     self.lblXi.grid(row = 1, column = 0, sticky = "w")
@@ -50,7 +50,7 @@ class View(Frame):
 
     self.btnCalcular.grid(row = 6, column = 1, columnspan = 2)
 
-    self.listBox.grid(row = 1, column = 3, rowspan = 5)
+    self.listBox.grid(row = 1, column = 3, rowspan = 6)
 
   @property
   def controller(self) -> Controller:
@@ -67,13 +67,13 @@ class View(Frame):
       self._controller = controller
   
   def btnCalcularOnClick(self):
-    self.controller.Calcular(self.etrXi.get(), self.etrXf.get(), self.etrN.get(), self.etrP.get(), self.etrQ.get())
+    self.controller.Calcular(self.etrXi.get(), self.etrXf.get(), self.etrN.get(), self.etrP.get(), self.etrQ.get(), self.comboP.current())
 
   def etrPKeyRelease(self, sender):
     valor = sender.char.strip()
     if valor != "":
       if self.controller.EhValorDecimal(valor):
-        self.controller.AtribuirComplemento(Decimal(valor), self.comboP.current())
+        self.controller.AtribuirComplemento(Decimal(self.etrP.get()), self.comboP.current())
 
       elif valor.find(".") == -1:
         self.etrQ["state"] = "normal"
@@ -82,14 +82,17 @@ class View(Frame):
         self.MsgErro("Valor '" + valor + "' não é numérico")
 
     else:
-      self.etrQ["state"] = "normal"
-      self.etrQ.delete(0, END)
-      self.etrQ["state"] = "disabled"
+      self.limparQ()
 
   def setValueComplemento(self, value):
     self.etrQ["state"] = "normal"
     self.etrQ.delete(0, END)
     self.etrQ.insert(0, str(value))
+    self.etrQ["state"] = "disabled"
+
+  def limparQ(self):
+    self.etrQ["state"] = "normal"
+    self.etrQ.delete(0, END)
     self.etrQ["state"] = "disabled"
 
   def ComboboxSelected(self, event):
@@ -102,10 +105,7 @@ class View(Frame):
     self.listBox.insert(END, valor)
 
   def AddListBox(self, x, probabilidade, acumulado):
-    if str(acumulado) == "" or acumulado == 0:
-      self.listBox.insert(END, "[" + str(x) + "]  [" + str(probabilidade) + "] []")
-    else:
-      self.listBox.insert(END, "[" + str(x) + "]  [" + str(probabilidade) + "]  [" + str(acumulado) + "]")
+    self.listBox.insert(END, "[" + str(x) + "]  [       " + str(probabilidade) + "      ]  [      " + str(acumulado) + "    ]")
 
   def MsgErro(self, msg):
     messagebox.showerror(title="Erro", message=msg)

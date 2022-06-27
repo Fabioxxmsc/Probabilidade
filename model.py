@@ -23,9 +23,11 @@ class Model:
     except:
       return False
 
-  def xValido(self, xi, xf) -> bool:
+  def xValido(self, xi, xf, n) -> bool:
     if self.EhValorInteiro(xi) and self.EhValorInteiro(xf):
-      return (int(xi) >= 0) and (int(xf) >= 0) and (int(xi) <= int(xf))
+      xIni = int(xi)
+      xFim = int(xf)
+      return (xIni >= 0) and (xFim >= 0) and (xIni <= xFim) and (xFim <= int(n))
     else:
       return False
 
@@ -35,19 +37,51 @@ class Model:
     else:
       return False
 
-  def pqvalido(self, p, q) -> bool:
+  def pqvalido(self, p, q, indexCK) -> bool:
     if self.EhValorDecimal(p) and self.EhValorDecimal(q):
-      return (Decimal(p) > 0) and (Decimal(p) + Decimal(q)) == 1
+      val = 1
+      if int(indexCK) == 0:
+        val = 100  
+      return (Decimal(p) > 0) and (Decimal(p) + Decimal(q)) == val
     else:
       return False
 
-  def DadosValidos(self, xi, xf, n, p, q) -> bool:
-    return self.xValido(xi, xf) and self.nValido(n) and self.pqvalido(p, q)
+  def DadosValidos(self, xi, xf, n, p, q, indexCK) -> bool:
+    return self.xValido(xi, xf, n) and self.nValido(n) and self.pqvalido(p, q, indexCK)
 
-  def CalcularProbabilidade(self, xi, xf, n, p, q):
+  def CalcularProbabilidade(self, xi, xf, n, p, q, indexCK):
     acumulado = 0
+    self.result.clear()
+    valorP = self.CalcularPorcentagem(p, indexCK)
+
+    if int(indexCK) == 0:
+      valorQ = Decimal(q / 100)
+    else:
+      valorQ = q
+
     for x in range(xi, xf + 1):
       combinacao = self.CalcularCombinacao(n, x)
-      proba = Decimal(combinacao * (p**x) * (q**(n - x)))
-      self.result[x] = [proba, acumulado]
+      proba = Decimal(combinacao * (valorP**x) * (valorQ**(n - x)))
       acumulado += proba
+      self.result[x] = [proba, acumulado]      
+
+  def CalcularPorcentagem(self, p, indexCK) -> Decimal:
+    proba = Decimal(p)
+    if int(indexCK) == 0:
+      proba = Decimal(proba / 100)
+      if proba > 0 and proba < 1:
+        return proba
+      else:
+        return -1
+    else:
+      if proba > 0 and proba < 100:
+        return proba
+      else:
+        return -1
+
+  def CalcularComplemento(self, p, indexCK) -> Decimal:
+    val = 1
+    proba = Decimal(p)
+    if int(indexCK) == 0:
+      val = 100
+    return Decimal(val - proba)
